@@ -32,3 +32,19 @@ class DbCreds(BaseModel):
             self.database_url = (f"postgresql+"
                                  f"psycopg2://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}")
         return self
+
+
+class JwtCreds:
+    secret_key: str = os.environ.get("JWT_SECRET_KEY")
+    algorithm: str = os.environ.get('JWT_ALGORITHM')
+    token_expire_time: int = int(os.environ.get('ACCESS_TOKEN_EXPIRE_MINUTES'))
+
+    @classmethod
+    def get_creds(cls) -> dict:
+        return {'secret_key': cls.secret_key, 'algorithm': cls.algorithm}
+
+    @classmethod
+    def get_dict(cls):
+        data = cls.get_creds()
+        data.update({'token_expire_time': cls.token_expire_time})
+        return data
