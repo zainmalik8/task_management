@@ -24,10 +24,14 @@ class ResponseUser(BaseUser):
     role: RoleEnum
 
 
-class LoginUser(BaseUser):
+class LoginUser(BaseModel):
     email: EmailStr
     password: str
 
 
 class ResponseToken(BaseModel):
     access_token: str
+
+
+class UpdateUser(BaseModel):
+    name: str

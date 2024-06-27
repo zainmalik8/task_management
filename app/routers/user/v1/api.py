@@ -1,11 +1,13 @@
 from fastapi import APIRouter, Depends
+from fastapi import status
 from sqlalchemy.orm import Session
 
-from app.models.user import User
 from app.dependencies import get_db
-from app.schemas.user import CreateUser, ResponseUser
-from app.utils import BadRequestException
 from app.logger import logger
+from app.models.user import User
+from app.schemas.user import CreateUser, ResponseUser, LoginUser, ResponseToken
+from app.settings import JwtCreds
+from app.utils import verify_password, generate_access_token, BadRequestException
 
 router = APIRouter(tags=["Authentication"])
 
@@ -21,3 +23,18 @@ def create_user(user: CreateUser, db: Session = Depends(get_db)):
     except Exception as error:
         logger.exception(error)
         raise BadRequestException
+
+
+@router.post('/login', response_model=ResponseToken, status_code=200, dependencies=[])
+def login_user(user_creds: LoginUser, db: Session = Depends(get_db)):
+    try:
+        serialized_data = user_creds.model_dump()
+        if user := db.query(User).filter(User.email == serialized_data["email"]).first():
+            if verify_password(serialized_data.get("password"), user.password):
+                access_token = generate_access_token({"user_id": str(user.id)}, **JwtCreds.get_dict())
+                return {"access_token": access_token}
+            raise BadRequestException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid password.")
+        raise BadRequestException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Email.")
+    except Exception as error:
+        logger.exception(error)
+        raise error if isinstance(error, BadRequestException) else BadRequestException
