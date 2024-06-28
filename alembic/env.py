@@ -8,6 +8,7 @@ from alembic import context
 from app.settings import DbCreds
 from app.models.base import Base
 from app.models.user import User  # noqa
+from app.models.project import Project  # noqa
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
