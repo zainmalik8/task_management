@@ -21,14 +21,16 @@ class JWTBearer(HTTPBearer):
         if credentials:
             if credentials.scheme != "Bearer":
                 raise HTTPException(status_code=403, detail="Invalid authentication scheme.")
-            if user_id := self.verify_jwt(credentials.credentials):
-                request.state.user_id = user_id
+            if user := self.verify_jwt(credentials.credentials):
+                request.state.user_id, request.state.user_role = user.get('user_id'), user.get("user_role")
+                if not self.permission_handler(request):
+                    raise HTTPException(status_code=403, detail="Request Forbidden.")
                 return credentials.credentials
             raise HTTPException(status_code=403, detail="Invalid token or expired token.")
         else:
             raise HTTPException(status_code=403, detail="Invalid authorization code.")
 
-    def verify_jwt(self, credentials: str) -> str:
+    def verify_jwt(self, credentials: str) -> dict:
         """
         This will verify the token and return user_id, if jwt has valid signature.
 
@@ -37,6 +39,19 @@ class JWTBearer(HTTPBearer):
         """
         try:
             decoded_jwt = jwt.decode(credentials, self.secret_key, algorithms=[self.algorithm])
-            return decoded_jwt.get('user_id')
+            decoded_jwt.pop("exp")
+            return decoded_jwt
         except Exception as error:
             logger.error(error)
+
+    @staticmethod
+    def permission_handler(request: Request) -> bool:
+        """
+
+        :param request: An instance of starlette request object
+        :return: boolean based on the roles and methods
+        """
+        scope, user_id, user_role = request.scope, request.state.user_id, request.state.user_role
+        api, method = scope.get('path').strip('/'), scope.get('method').lower()
+        if "admin" in api and user_role.lower() == "admin":
+            return True
