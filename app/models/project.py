@@ -9,4 +9,4 @@ class Project(BaseModel):
     __tablename__ = "projects"
 
     name = Column(String(255), nullable=False)
-    users = relationship("User", secondary=project_users, back_populates="project")
+    users = relationship("User", secondary=project_users, back_populates="projects")

@@ -31,7 +31,8 @@ def login_user(user_creds: LoginUser, db: Session = Depends(get_db)):
         serialized_data = user_creds.model_dump()
         if user := db.query(User).filter(User.email == serialized_data["email"]).first():
             if verify_password(serialized_data.get("password"), user.password):
-                access_token = generate_access_token({"user_id": str(user.id)}, **JwtCreds.get_dict())
+                access_token = generate_access_token({"user_id": str(user.id), "user_role": user.role},
+                                                     **JwtCreds.get_dict())
                 return {"access_token": access_token}
             raise BadRequestException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid password.")
         raise BadRequestException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Email.")

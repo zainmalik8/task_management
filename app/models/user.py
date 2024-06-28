@@ -14,4 +14,4 @@ class User(BaseModel):
     password = Column(String, nullable=False)  # hashed password
     role = Column(Enum(RoleEnum, name="user_roles"), default=RoleEnum.user)
 
-    users = relationship("Project", secondary=project_users, back_populates="user")
+    projects = relationship("Project", secondary=project_users, back_populates="users")
