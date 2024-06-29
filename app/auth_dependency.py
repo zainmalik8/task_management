@@ -53,5 +53,8 @@ class JWTBearer(HTTPBearer):
         """
         scope, user_id, user_role = request.scope, request.state.user_id, request.state.user_role
         api, method = scope.get('path').strip('/'), scope.get('method').lower()
-        if "admin" in api and user_role.lower() == "admin":
+        if "admin" in api:
+            if user_role.lower() == "admin":
+                return True
+        else:
             return True
